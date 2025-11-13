@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> // Para strcspn e strncpy_s
+#include <string.h> 
 
 typedef struct No {
     int codigo;
@@ -14,17 +14,12 @@ typedef struct No {
 ListaProdutos* inicio = NULL;
 ListaProdutos* fim = NULL;
 int tam = 0;
-//Marcin, isso é chamado prototipo de função, isso é mais por estética do código.
+
 void Adicionar(int, const char*, const char*, float);
 void Imprimir(int);
 void Remover(int);
 
-
-//Essa função é para limpar o '\n' que o scanf_s deixa no buffer, que o professor de Arq explicou.
 void limpar_buffer_stdin();
-//Todo scanf tem um valor de retorno, quando inserido o valor correto que ele espera...
-//Temos o retorno 1, mas quando não...
-//Temos o retorno 0, por isso limpamos e voltamos ao inicio do loop.
 int main() {
     int escolha = -1;
     do {
@@ -36,10 +31,10 @@ int main() {
         printf("3 - Imprimir\n");
         printf("0 - Sair do programa\n");
         printf("Escolha: ");
-        if (scanf_s("%d", &escolha) != 1) { //Verificação de entrada, para saber se foi inserido um inteiro
+        if (scanf_s("%d", &escolha) != 1) {
             printf("Entrada invalida. Tente novamente.\n");
-            limpar_buffer_stdin(); // Limpa entrada errada
-            escolha = -1; // Reseta a escolha
+            limpar_buffer_stdin();
+            escolha = -1;
             continue;
         }
         limpar_buffer_stdin();
@@ -61,9 +56,6 @@ int main() {
             printf("Digite o tipo de produto: ");
             fgets(tipo_produto, sizeof(tipo_produto), stdin);
             tipo_produto[strcspn(tipo_produto, "\n")] = 0; // Remove o '\n'
-            //Caso o que escrevermos chegar a 31 caracteres vai quebrar o codigo.
-            //Temos somente o buffer do sizeof(tipo_produto) que é -1 do que o normal,
-            //Então vai sobrar o \n para o proximo fgets. Voltando para o problema anterior.
             printf("Digite a descricao o produto: ");
             fgets(descricao, sizeof(descricao), stdin);
             descricao[strcspn(descricao, "\n")] = 0;
@@ -112,7 +104,6 @@ int main() {
         }
     } while (escolha != 0);
 
-    // Limpa a lista antes de sair
     while (inicio != NULL) {
         Remover(0);
     }
@@ -132,38 +123,34 @@ void Adicionar(int codigo, const char* tipo_produto, const char* descricao, floa
     }
 
     novo->codigo = codigo;
-    //Marcin, isso daqui é um dos problemas de strings ou const char*.
-    //Precisamos usar essa função da biblioteca string.h para adicionar...
-    //Uma string de "recurso" para uma string "destinataria", mas para...
-    //não ter estouro a gente passa o tamanho de buffer necessario.
     strncpy_s(novo->tipo_produto, sizeof(novo->tipo_produto), tipo_produto, _TRUNCATE);
     strncpy_s(novo->descricao, sizeof(novo->descricao), descricao, _TRUNCATE);
     novo->preco = preco;
     novo->next = novo->prev = NULL;
 
-    if (inicio == NULL) { // Lista vazia
+    if (inicio == NULL) { 
         inicio = novo;
         fim = novo;
     }
     else {
-        if (novo->preco < inicio->preco) { // Inserir no início
+        if (novo->preco < inicio->preco) { 
             novo->next = inicio;
             inicio->prev = novo;
             inicio = novo;
         }
-        else if (novo->preco >= fim->preco) { // Inserir no fim
+        else if (novo->preco >= fim->preco) { 
             fim->next = novo;
             novo->prev = fim;
             fim = novo;
         }
         else { // Inserir no meio
-            ListaProdutos* aux = inicio->next; // Começa do segundo item
+            ListaProdutos* aux = inicio->next; 
             while (aux != NULL) {
                 if (novo->preco < aux->preco) {
                     novo->next = aux;
                     novo->prev = aux->prev;
-                    aux->prev->next = novo; // O anterior ao aux aponta pro novo
-                    aux->prev = novo;       // O aux aponta pro novo
+                    aux->prev->next = novo; 
+                    aux->prev = novo;
                     break;
                 }
                 aux = aux->next;
@@ -179,7 +166,7 @@ void Imprimir(int pos) {
         return;
     }
 
-    if (pos == -1) { // Imprimir tudo
+    if (pos == -1) { 
         ListaProdutos* aux = inicio;
         printf("\n--- Imprimindo Lista Completa (%d elementos) ---\n", tam);
         int i = 0;
@@ -195,7 +182,7 @@ void Imprimir(int pos) {
         }
         printf("---------------------------------------------\n");
     }
-    else { // Imprimir posição específica
+    else { 
         if (pos < 0 || pos >= tam) {
             printf("Erro: Posicao %d eh invalida. (Tamanho atual: %d)\n", pos, tam);
             return;
@@ -234,25 +221,22 @@ void Remover(int pos) {
 
     ListaProdutos* lixo = NULL;
 
-    if (tam == 1) { // Caso especial: Removendo o único item
-        //lembrando que não chegará aqui se ele digitar um valor de posição inexistente.
+    if (tam == 1) { 
         lixo = inicio;
         inicio = NULL;
         fim = NULL;
     }
-    else if (pos == 0) { // Removendo do início
+    else if (pos == 0) { 
         lixo = inicio;
         inicio = inicio->next;
         inicio->prev = NULL;
     }
-    else if (pos == tam - 1) { // Removendo do fim
+    else if (pos == tam - 1) { 
         lixo = fim;
         fim = fim->prev;
         fim->next = NULL;
     }
-    else { // Removendo do meio
-        //Para eu utilizar o ponteiro anterior, eu criei essa forma de chegar mais rapido...
-        //a posição desejada percorrendo o menor caminho.
+    else {
         if (pos <= tam / 2) {
             lixo = inicio;
             for (int i = 0; i < pos; i++) {
