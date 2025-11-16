@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> // Para strcspn, strcmp e strncpy_s
+#include <string.h> //Para strcspn, strcmp e strncpy_s
 #include <stdbool.h>
 #include <ctype.h>
 
