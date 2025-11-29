@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <string.h> // strcspn, strcmp, memcpy
+#include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -9,20 +9,9 @@
 #define CAP_QUILHA 10
 #define CAP_DECK 5
 
-/* Índices e nomes das categorias
-   - Usados para mapear strings de entrada para as pilhas internas.
-   - Evita repetir literais de string no código.
-*/
 enum { TYPE_PARAFINA = 0, TYPE_LEASH = 1, TYPE_QUILHA = 2, TYPE_DECK = 3, NUM_TYPES = 4 };
 static const char* PRODUCT_TYPE_NAMES[NUM_TYPES] = { "Parafina", "Leash", "Quilha", "Deck" };
 
-/* Nó da lista duplamente encadeada de produtos
-   - codigo: id único do produto
-   - tipo_produto: categoria em texto
-   - descricao: descrição do produto
-   - preco: preço do produto (float)
-   - next/prev: ponteiros para inserção/remoção rápida
-*/
 typedef struct Produto {
     int codigo;
     char tipo_produto[32];
@@ -32,23 +21,15 @@ typedef struct Produto {
     struct Produto* prev;
 } ListaProdutos;
 
-// Ponteiros globais da lista de produtos
-ListaProdutos* headP = NULL; // ponteiro para o primeiro produto (menor preço)
-ListaProdutos* tailP = NULL; // ponteiro para o último produto (maior preço)
-int tamP = 0;                // número de produtos na lista
+ListaProdutos* headP = NULL;
+ListaProdutos* tailP = NULL;
+int tamP = 0;
 
-// Nó usado para armazenar um código dentro de uma caixa
 typedef struct LC {
     int codigo;
     struct LC* next;
 } ListaCodigos;
 
-/* Estrutura da caixa usada como elemento da pilha por categoria
-   - codigo: id da caixa
-   - quantP: quantidade de códigos dentro desta caixa
-   - lista_codigos: ponteiro para lista de códigos da caixa
-   - below: ponteiro para a caixa abaixo (ligação da pilha)
-*/
 typedef struct caixa {
     int codigo;
     int quantP;
@@ -56,7 +37,6 @@ typedef struct caixa {
     struct caixa* below;
 } Caixa;
 
-// Ponteiros globais para os topos das quatro pilhas de categoria
 Caixa* topoParafina = NULL;
 Caixa* topoLeash = NULL;
 Caixa* topoQuilha = NULL;
@@ -77,7 +57,6 @@ FilaEntrega* headFE = NULL;
 FilaEntrega* tailFE = NULL;
 int tamFE = 0;
 
-// Protótipos das funções
 void AddPilhaCaixa(int, const char*);
 void AdicionarLPV(int, const char*, const char*, float);
 void AdicionarFE(const char*, const char*, int, const char*, int, const char*, ListaProdutos*);
@@ -99,23 +78,13 @@ void RemoverProdutoDaPilha(int, const char*);
 ListaProdutos* VendaProduto(int);
 void ComfirmacaoSE();
 void limpar_buffer_stdin();
-//void Remover(int pos);
 int tipo_index_from_string(const char*);
 bool CodigoExiste(int);
 
-/* Handle é só uma ajuda para o scanf identificar se houve entrada de EOF(Quebra de linha): Limpa e fecha o programa */
 static void handle_scanf_result(int);
 
-/* Comparador de strings case-insensitive
-   - retorna 1 se iguais ignorando maiúsculas/minúsculas, 0 caso contrário
-   - usa conversão para unsigned char antes de tolower por segurança
-*/
 static int strings_equal_ci(const char*, const char*);
 
-/* Programa principal: loop interativo de menu
-   - lê a opção do usuário
-   - encaminha para funções: adicionar produto, menu de vendas, listar, ver pilhas, sair
-*/
 int main() {
     int escolha = -1;
     do {
@@ -132,7 +101,6 @@ int main() {
         int r = scanf_s("%d", &escolha);
         handle_scanf_result(r);
         if (r != 1) {
-            // validação de entrada: se scanf falhar, limpa buffer e repete
             printf("Entrada invalida. Tente novamente.\n");
             limpar_buffer_stdin();
             escolha = -1;
@@ -143,10 +111,6 @@ int main() {
         switch (escolha) {
 
         case 1: {
-            /* Fluxo de adicionar produto:
-               - lê código, categoria, descrição e preço
-               - chama AdicionarLPV para inserir no catálogo e nas caixas
-            */
             int codigo = 0;
             char tipo_produto[32];
             char descricao[64];
@@ -168,7 +132,7 @@ int main() {
                 LiberarTudo();
                 return 0;
             }
-            tipo_produto[strcspn(tipo_produto, "\n")] = 0; // remove newline
+            tipo_produto[strcspn(tipo_produto, "\n")] = 0;
 
             printf("Digite a descricao o produto: ");
             if (fgets(descricao, sizeof(descricao), stdin) == NULL) {
@@ -176,7 +140,7 @@ int main() {
                 LiberarTudo();
                 return 0;
             }
-            descricao[strcspn(descricao, "\n")] = 0; // remove newline
+            descricao[strcspn(descricao, "\n")] = 0;
 
             printf("Digite o preco do produto: ");
             r = scanf_s("%f", &preco);
@@ -192,11 +156,6 @@ int main() {
         }
 
         case 2: {
-            /* Menu de vendas:
-               - opção 1: listar por categoria
-               - opção 2: listar por faixa de preço
-               - opção 3: vender produto por código (chama VendaProduto)
-            */
             int opcao = -1;
             ListaProdutos* ProdutoVendido = NULL;
             do {
@@ -358,10 +317,6 @@ int main() {
         }
 
         case 3: {
-            /* Imprimir item do catálogo ou todos:
-               - pede posição (-1 para imprimir tudo)
-               - usa Imprimir para acesso eficiente
-            */
             printf("Digite a posicao desejada de 0 a %d (-1 para todos): ", tamP - 1);
             r = scanf_s("%d", &pos);
             handle_scanf_result(r);
@@ -375,9 +330,6 @@ int main() {
         }
 
         case 4: {
-            /* Imprimir pilha de uma categoria:
-               - lê string da categoria, converte para índice e imprime a pilha correta
-            */
             while (true) {
                 char nomePilha[64];
                 printf("Digite o Nome da Pilha (Parafina, Leash, Quilha, Deck): ");
@@ -426,22 +378,14 @@ int main() {
     return 0;
 }
 
-/* Converte string de categoria fornecida pelo usuário para índice
-   - remove espaços iniciais/finais
-   - compara case-insensitivamente com PRODUCT_TYPE_NAMES
-   - retorna -1 se não houver correspondência
-*/
 int tipo_index_from_string(const char* s) {
     if (s == NULL) return -1;
     char buf[64];
     size_t i = 0;
-    // remove espaços iniciais
     while (*s != '\0' && isspace((unsigned char)*s)) s++;
-    // copia a string do usuário para um buffer local (cópia segura)
     while (*s != '\0' && i + 1 < sizeof(buf)) {
         buf[i++] = *s++;
     }
-    // remove espaços finais no buffer
     while (i > 0 && isspace((unsigned char)buf[i - 1])) i--;
     buf[i] = '\0';
 
@@ -451,10 +395,6 @@ int tipo_index_from_string(const char* s) {
     return -1;
 }
 
-/* Adiciona um código de produto na pilha da categoria correspondente
-   - Se a caixa do topo for NULL ou estiver cheia, cria nova caixa e empilha como topo
-   - Insere um nó de código na lista interna da caixa (LIFO)
-*/
 void AddPilhaCaixa(int codigoProduto, const char* tipo_produto) {
     Caixa** pTopo = NULL;
     int capacidadeMax = 0;
@@ -471,7 +411,6 @@ void AddPilhaCaixa(int codigoProduto, const char* tipo_produto) {
     capacidadeMax = capacities[tipo_idx];
 
     Caixa* topoAtual = *pTopo;
-    // Se não existe caixa ou a caixa do topo está cheia, cria nova caixa e coloca no topo
     if (topoAtual == NULL || topoAtual->quantP >= capacidadeMax) {
         Caixa* novaCaixa = (Caixa*)malloc(sizeof(Caixa));
         if (novaCaixa == NULL) {
@@ -482,15 +421,13 @@ void AddPilhaCaixa(int codigoProduto, const char* tipo_produto) {
         static int global_caixa_id = 1;
         novaCaixa->codigo = global_caixa_id++;
 
-        // inicializa a nova caixa
         novaCaixa->quantP = 0;
         novaCaixa->lista_codigos = NULL;
-        novaCaixa->below = topoAtual; // liga para o topo anterior (pode ser NULL)
-        *pTopo = novaCaixa;           // atualiza o ponteiro de topo
-        topoAtual = novaCaixa;        // usa a nova caixa para inserção
+        novaCaixa->below = topoAtual;
+        *pTopo = novaCaixa;
+        topoAtual = novaCaixa;
     }
 
-    // cria nó de código e empilha na lista de códigos da caixa do topo
     ListaCodigos* novoCodigo = (ListaCodigos*)malloc(sizeof(ListaCodigos));
     if (novoCodigo == NULL) {
         perror("malloc falhou para novo codigo");
@@ -498,15 +435,12 @@ void AddPilhaCaixa(int codigoProduto, const char* tipo_produto) {
     }
 
     novoCodigo->codigo = codigoProduto;
-    novoCodigo->next = topoAtual->lista_codigos; // insere no início da lista de códigos
+    novoCodigo->next = topoAtual->lista_codigos;
     topoAtual->lista_codigos = novoCodigo;
     topoAtual->quantP++;
     return;
 }
 
-/* ImprimirPilha: imprime a pilha de uma categoria
-   - itera caixas do topo até a base e imprime id da caixa, quantidade e códigos dentro
-*/
 void ImprimirPilha(const char* nome, Caixa* topo, int capacidade) {
     printf("\n--- Pilha de %s --- (Capacidade por caixa: %d)\n", nome, capacidade);
     Caixa* aux = topo;
@@ -524,7 +458,6 @@ void ImprimirPilha(const char* nome, Caixa* topo, int capacidade) {
             printf("  Nivel %d: [Caixa Cod: %d] Qtd: %d/%d\n", nivel, aux->codigo, aux->quantP, capacidade);
         }
 
-        // imprime os códigos dentro da caixa atual (ordem LIFO)
         ListaCodigos* cod = aux->lista_codigos;
         printf("    Codigos na Caixa: ");
         if (cod == NULL) {
@@ -536,12 +469,11 @@ void ImprimirPilha(const char* nome, Caixa* topo, int capacidade) {
         }
         printf("\n");
 
-        aux = aux->below; // desce na pilha
+        aux = aux->below;
         nivel++;
     }
 }
 
-/* Imprime resumo de todas as pilhas (chama ImprimirPilha para cada categoria) */
 void ImprimirPilhas() {
     printf("\n============================================\n");
     printf("     ESTADO ATUAL DO ESTOQUE     \n");
@@ -553,20 +485,11 @@ void ImprimirPilhas() {
     printf("============================================\n");
 }
 
-/* Limpa o newline restante no stdin
-   - usado após scanf para preparar para fgets
-*/
 void limpar_buffer_stdin() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-/* Adiciona produto ao catálogo (ordenado por preço) e ao estoque (caixas)
-   - primeiro verifica duplicata com CodigoExiste
-   - cópia segura de strings para buffers fixos
-   - insere mantendo ordem crescente por preço
-   - atualiza tamanho e chama AddPilhaCaixa para estoque
-*/
 void AdicionarLPV(int codigo, const char* tipo_produto, const char* descricao, float preco) {
     if (CodigoExiste(codigo)) {
         printf("Erro: Codigo %d ja cadastrado. Operacao cancelada.\n", codigo);
@@ -580,15 +503,13 @@ void AdicionarLPV(int codigo, const char* tipo_produto, const char* descricao, f
     }
 
     novo->codigo = codigo;
-    // copia tipo_produto com truncamento seguro
     {
-        const char* tp = tipo_produto ? tipo_produto : ""; // Caso você não saiba o que é esse ? marcin, ele é o if compactado
+        const char* tp = tipo_produto ? tipo_produto : "";
         size_t len = strlen(tp);
         if (len >= sizeof(novo->tipo_produto)) len = sizeof(novo->tipo_produto) - 1;
         memcpy(novo->tipo_produto, tp, len);
         novo->tipo_produto[len] = '\0';
     }
-    // copia descricao com truncamento seguro
     {
         const char* d = descricao ? descricao : "";
         size_t len = strlen(d);
@@ -600,31 +521,25 @@ void AdicionarLPV(int codigo, const char* tipo_produto, const char* descricao, f
     novo->preco = preco;
     novo->next = novo->prev = NULL;
 
-    // Inserção na lista duplamente encadeada ordenada por preço
     if (headP == NULL) {
-        // lista vazia -> novo vira head e tail
         headP = novo;
         tailP = novo;
     }
     else {
         if (novo->preco < headP->preco) {
-            // inserir no início
             novo->next = headP;
             headP->prev = novo;
             headP = novo;
         }
         else if (novo->preco >= tailP->preco) {
-            // inserir no fim
             tailP->next = novo;
             novo->prev = tailP;
             tailP = novo;
         }
         else {
-            // inserir no meio
-            ListaProdutos* aux = headP->next; // começa do segundo elemento
+            ListaProdutos* aux = headP->next;
             while (aux != NULL) {
                 if (novo->preco < aux->preco) {
-                    // liga novo entre aux->prev e aux
                     novo->next = aux;
                     novo->prev = aux->prev;
                     aux->prev->next = novo;
@@ -636,7 +551,7 @@ void AdicionarLPV(int codigo, const char* tipo_produto, const char* descricao, f
         }
     }
     tamP++;
-    AddPilhaCaixa(codigo, tipo_produto); // também adiciona código nas caixas de estoque
+    AddPilhaCaixa(codigo, tipo_produto);
 }
 
 void AdicionarFE(const char* nomeCliente, const char* cpfCliente, int cepCliente, const char* ruaCliente, int numeroCasaCliente, const char* complementoCasaCliente, ListaProdutos* produtoVendido) {
@@ -646,14 +561,14 @@ void AdicionarFE(const char* nomeCliente, const char* cpfCliente, int cepCliente
         return;
     }
     {
-        const char* nc = nomeCliente ? nomeCliente : ""; // Caso você não saiba o que é esse ? marcin, ele é o if compactado
+        const char* nc = nomeCliente ? nomeCliente : "";
         size_t len = strlen(nc);
         if (len >= sizeof(NovaEntrega->nomeCliente)) len = sizeof(NovaEntrega->nomeCliente) - 1;
         memcpy(NovaEntrega->nomeCliente, nc, len);
         NovaEntrega->nomeCliente[len] = '\0';
     }
     {
-        const char* cpfc = cpfCliente ? cpfCliente : ""; // Caso você não saiba o que é esse ? marcin, ele é o if compactado
+        const char* cpfc = cpfCliente ? cpfCliente : "";
         size_t len = strlen(cpfc);
         if (len >= sizeof(NovaEntrega->cpfCliente)) len = sizeof(NovaEntrega->cpfCliente) - 1;
         memcpy(NovaEntrega->cpfCliente, cpfc, len);
@@ -661,7 +576,7 @@ void AdicionarFE(const char* nomeCliente, const char* cpfCliente, int cepCliente
     }
     NovaEntrega->cepCliente = cepCliente;
     {
-        const char* rc = ruaCliente ? ruaCliente : ""; // Caso você não saiba o que é esse ? marcin, ele é o if compactado
+        const char* rc = ruaCliente ? ruaCliente : "";
         size_t len = strlen(rc);
         if (len >= sizeof(NovaEntrega->ruaCliente)) len = sizeof(NovaEntrega->ruaCliente) - 1;
         memcpy(NovaEntrega->ruaCliente, rc, len);
@@ -669,7 +584,7 @@ void AdicionarFE(const char* nomeCliente, const char* cpfCliente, int cepCliente
     }
     NovaEntrega->numeroCasaCliente = numeroCasaCliente;
     {
-        const char* ccc = complementoCasaCliente ? complementoCasaCliente : ""; // Caso você não saiba o que é esse ? marcin, ele é o if compactado
+        const char* ccc = complementoCasaCliente ? complementoCasaCliente : "";
         size_t len = strlen(ccc);
         if (len >= sizeof(NovaEntrega->complementoCasaCliente)) len = sizeof(NovaEntrega->complementoCasaCliente) - 1;
         memcpy(NovaEntrega->complementoCasaCliente, ccc, len);
@@ -695,10 +610,6 @@ void AdicionarFE(const char* nomeCliente, const char* cpfCliente, int cepCliente
     return;
 }
 
-/* Verifica se código de produto já existe no catálogo
-   - varredura linear; O(n)
-   - suficiente para catálogos moderados, se não vou ter que estudar mais para fazer hash no lugar ;(
-*/
 bool CodigoExiste(int codigo) {
     ListaProdutos* cur = headP;
     while (cur != NULL) {
@@ -708,10 +619,6 @@ bool CodigoExiste(int codigo) {
     return false;
 }
 
-/* Imprime nós do catálogo
-   - pos == -1 -> imprime toda a lista
-   - caso contrário imprime índice específico otimizada por head/tail e verificaçao de posiçao em relaçõa ao meio
-*/
 void Imprimir(int pos) {
     if (headP == NULL) {
         printf("\nLista esta vazia.\n");
@@ -751,9 +658,6 @@ void Imprimir(int pos) {
     }
 }
 
-/* Imprime produtos filtrados por categoria
-   - varre toda a lista e imprime os nós correspondentes
-*/
 void ImprimirVendaC(const char* tipo_produto) {
     if (headP == NULL) {
         printf("Nao tem produtos cadastrados!");
@@ -768,8 +672,6 @@ void ImprimirVendaC(const char* tipo_produto) {
     }
     return;
 }
-
-// Imprime produtos filtrados por faixa de preço [valorI, valorF]
 
 void ImprimirVendaP(float valorI, float valorF) {
     if (headP == NULL) {
@@ -786,14 +688,6 @@ void ImprimirVendaP(float valorI, float valorF) {
     return;
 }
 
-/* Remove o código do produto da pilha de estoque e realiza o equilíbrio entre caixas
-     1) Converte categoria para ponteiro da pilha e obtém capacidade
-     2) Desempilha caixas para uma pilha auxiliar até encontrar a caixa que contém o código
-     3) Se não encontrado, restaura caixas e retorna a falha
-     4) Se encontrado, seleciona a última caixa auxiliar como caixa de equilíbrio
-     5) Restaura as demais caixas auxiliares para a pilha principal, move um código da caixa de equilíbrio para a caixa encontrada se necessário
-     6) Reempilha a caixa encontrada e a caixa de equilíbrio (ou libera esta última se ficou vazia)
-*/
 void RemoverProdutoDaPilha(int codigoProduto, const char* tipo_produto) {
     int tipo_idx = tipo_index_from_string(tipo_produto);
     if (tipo_idx < 0 || tipo_idx >= NUM_TYPES) {
@@ -807,30 +701,25 @@ void RemoverProdutoDaPilha(int codigoProduto, const char* tipo_produto) {
     Caixa** pTopo = pilha_ptrs[tipo_idx];
     int capacidadeMax = capacities[tipo_idx];
 
-    Caixa* pilhaAux = NULL;      // pilha auxiliar para caixas temporariamente removidas
-    Caixa* caixaEncontrada = NULL; // caixa que contém o código
-
-    // 1) desempilha caixas da pilha principal até encontrar o código ou esvaziar a pilha
+    Caixa* pilhaAux = NULL;
+    Caixa* caixaEncontrada = NULL;
     while (*pTopo != NULL) {
         Caixa* caixaAtual = *pTopo;
-        *pTopo = (*pTopo)->below; // remove topo da pilha principal
-        caixaAtual->below = NULL; // desliga
+        *pTopo = (*pTopo)->below;
+        caixaAtual->below = NULL;
 
         ListaCodigos* cod = caixaAtual->lista_codigos;
         ListaCodigos* prev = NULL;
         bool found = false;
-
-        // 2) procura o código dentro desta caixa
         while (cod != NULL) {
             if (cod->codigo == codigoProduto) {
-                // remove nó de código da lista da caixa
                 if (prev == NULL) {
                     caixaAtual->lista_codigos = cod->next;
                 }
                 else {
                     prev->next = cod->next;
                 }
-                free(cod); // libera nó de código
+                free(cod);
                 caixaAtual->quantP--;
                 caixaEncontrada = caixaAtual;
                 found = true;
@@ -841,42 +730,35 @@ void RemoverProdutoDaPilha(int codigoProduto, const char* tipo_produto) {
         }
 
         if (found) {
-            // para de desempilhar: caixaEncontrada contém a caixa onde o código foi removido
             break;
         }
         else {
-            // coloca a caixa inteira na pilha auxiliar para continuar a busca abaixo
             PushCaixa(&pilhaAux, caixaAtual);
         }
     }
 
-    // 3) se não encontrou, restaura pilha principal e sai
     if (caixaEncontrada == NULL) {
         while (pilhaAux != NULL) {
             Caixa* temp = pilhaAux;
-            pilhaAux = pilhaAux->below; // pop da auxiliar
-            PushCaixa(pTopo, temp);     // push de volta na pilha principal
+            pilhaAux = pilhaAux->below;
+            PushCaixa(pTopo, temp);
         }
         printf("Venda Falhou: Nao foi encontrado o codigo %d na pilha %s.\n", codigoProduto, tipo_produto);
         return;
     }
 
-    // 4) escolhe caixa de equilíbrio (topo da pilha auxiliar é a última caixa removida)
     Caixa* caixaEquilibrio = NULL;
     if (pilhaAux != NULL) {
         caixaEquilibrio = pilhaAux;
-        pilhaAux = pilhaAux->below; // remove caixaEquilibrio da auxiliar
+        pilhaAux = pilhaAux->below;
         caixaEquilibrio->below = NULL;
     }
 
-    // 5) restaura as demais caixas auxiliares (preserva ordem original)
     while (pilhaAux != NULL) {
         Caixa* temp = pilhaAux;
         pilhaAux = pilhaAux->below;
         PushCaixa(pTopo, temp);
     }
-
-    // 6) se existe caixaEquilibrio e a caixa encontrada tem espaço, move um código da caixaEquilibrio para a caixaEncontrada
     if (caixaEquilibrio != NULL) {
         if (caixaEncontrada->quantP < capacidadeMax) {
             int codEquilibrio = PopCodigo(&(caixaEquilibrio->lista_codigos));
@@ -886,31 +768,21 @@ void RemoverProdutoDaPilha(int codigoProduto, const char* tipo_produto) {
                 caixaEncontrada->quantP++;
             }
         }
-        // a caixa de equilíbrio pode ficar vazia após a remoção; tratado abaixo
     }
 
-    // reempilha a caixa encontrada para que ela seja o novo topo da pilha principal
     PushCaixa(pTopo, caixaEncontrada);
 
-    // se houver caixa de equilíbrio, reempilha ou libera se vazia
     if (caixaEquilibrio != NULL) {
         if (caixaEquilibrio->quantP == 0) {
-            // caixa de equilíbrio ficou vazia, libera ela
             printf("Info Estoque: Caixa %d ficou vazia e foi descartada.\n", caixaEquilibrio->codigo);
             free(caixaEquilibrio);
         }
         else {
-            // coloca a caixa de equilíbrio abaixo da caixa encontrada
             PushCaixa(pTopo, caixaEquilibrio);
         }
     }
 }
 
-/* VendaProduto: remove produto do catálogo e atualiza pilha de estoque
-   - encontra nó do produto por código
-   - se encontrado, chama RemoverProdutoDaPilha para atualizar estoque
-   - remove nó da lista duplamente encadeada e retorna
-*/
 ListaProdutos* VendaProduto(int codigo) {
     ListaProdutos* aux = headP;
     while (aux != NULL && aux->codigo != codigo) aux = aux->next;
@@ -918,11 +790,8 @@ ListaProdutos* VendaProduto(int codigo) {
         printf("Venda Falhou: Nao foi encontrado nenhum produto com o codigo %d\n", codigo);
         return NULL;
     }
-
-    // remove do estoque primeiro, depois remove da lista
     RemoverProdutoDaPilha(aux->codigo, aux->tipo_produto);
 
-    // desliga o nó da lista duplamente encadeada
     if (aux == headP) {
         headP = aux->next;
         if (headP != NULL) headP->prev = NULL;
@@ -959,20 +828,12 @@ void ComfirmacaoSE() {
     return;
 }
 
-/* Empilha uma caixa em uma pilha
-   - pTopo: ponteiro para ponteiro do topo da pilha
-   - caixa: caixa a ser empilhada
-   - seta caixa->below para o antigo topo e atualiza ponteiro de topo
-*/
 void PushCaixa(Caixa** pTopo, Caixa* caixa) {
     if (caixa == NULL) return;
     caixa->below = *pTopo;
     *pTopo = caixa;
 }
 
-/* Pop do primeiro código da lista da caixa (retorna -1 se vazia)
-   - libera o nó de código e retorna o valor do código
-*/
 int PopCodigo(ListaCodigos** head) {
     if (head == NULL || *head == NULL) return -1;
     ListaCodigos* node = *head;
@@ -982,9 +843,6 @@ int PopCodigo(ListaCodigos** head) {
     return codigo;
 }
 
-/* Empilha um código na lista de códigos da caixa (LIFO)
-   - aloca nó e insere no início
-*/
 void PushCodigo(ListaCodigos** head, int codigo) {
     ListaCodigos* node = (ListaCodigos*)malloc(sizeof(ListaCodigos));
     if (node == NULL) {
@@ -995,8 +853,6 @@ void PushCodigo(ListaCodigos** head, int codigo) {
     node->next = *head;
     *head = node;
 }
-
-/* Libera lista encadeada de códigos */
 void LiberarCodigos(ListaCodigos* head) {
     ListaCodigos* cur = head;
     while (cur != NULL) {
@@ -1005,21 +861,18 @@ void LiberarCodigos(ListaCodigos* head) {
         cur = prox;
     }
 }
-
-/* Libera todas as caixas de uma pilha e suas listas internas de códigos */
 void LiberarCaixas(Caixa** topo_ptr) {
     if (topo_ptr == NULL) return;
     Caixa* caixa = *topo_ptr;
     while (caixa != NULL) {
         Caixa* abaixo = caixa->below;
-        LiberarCodigos(caixa->lista_codigos); // libera códigos primeiro
-        free(caixa);                          // depois libera caixa
+        LiberarCodigos(caixa->lista_codigos);
+        free(caixa);
         caixa = abaixo;
     }
     *topo_ptr = NULL;
 }
 
-/* Libera toda a lista de produtos */
 void LiberarProdutos(void) {
     ListaProdutos* cur = headP;
     while (cur != NULL) {
@@ -1031,8 +884,6 @@ void LiberarProdutos(void) {
     tailP = NULL;
     tamP = 0;
 }
-
-/* Libera tudo: produtos e todas as pilhas de caixas */
 void LiberarTudo(void) {
     LiberarProdutos();
     LiberarCaixas(&topoParafina);
@@ -1041,7 +892,6 @@ void LiberarTudo(void) {
     LiberarCaixas(&topoDeck);
 }
 
-/* Imprime os campos de um nó do catálogo */
 void ImprimirProdutoNode(const ListaProdutos* node) {
     if (node == NULL) return;
     printf("---------------------------------------------\n");
