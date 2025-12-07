@@ -5,7 +5,18 @@
 #include <ctype.h>
 #include "headfunctions.h"
 
-int tipo_index_from_string(const char* s) {
+static bool strings_equal_ci(const char* a, const char* b) {
+    if (a == NULL || b == NULL) return false;
+    while (*a != '\0' && *b != '\0') {
+        char ca = tolower((unsigned char)*a);
+        char cb = tolower((unsigned char)*b);
+        if (ca != cb) return false;
+        a++; b++;
+    }
+    return *a == *b;
+}
+
+int tipo_index_para_string(const char* s) {
     if (s == NULL) return -1;
     char buf[64];
     size_t i = 0;
@@ -22,50 +33,72 @@ int tipo_index_from_string(const char* s) {
     return -1;
 }
 
-void AddPilhaCaixa(int codigoProduto, const char* tipo_produto) {
-    Caixa** pTopo = NULL;
-    int capacidadeMax = 0;
-
-    int tipo_idx = tipo_index_from_string(tipo_produto);
+bool AddPilhaCaixa(int codigoProduto, const char* tipo_produto) {
+    int tipo_idx = tipo_index_para_string(tipo_produto);
     if (tipo_idx < 0 || tipo_idx >= NUM_TYPES) {
         printf("ERRO ESTOQUE: Tipo de produto '%s' desconhecido.\n", tipo_produto);
-        return;
+        return true;
     }
+
+    Caixa** pTopo = NULL;
+    int capacidadeMax = 0;
     Caixa** pilha_ptrs[NUM_TYPES] = { &topoParafina, &topoLeash, &topoQuilha, &topoDeck };
     int capacities[NUM_TYPES] = { CAP_PARAFINA, CAP_LEASH, CAP_QUILHA, CAP_DECK };
 
     pTopo = pilha_ptrs[tipo_idx];
     capacidadeMax = capacities[tipo_idx];
 
-    Caixa* topoAtual = *pTopo;
-    if (topoAtual == NULL || topoAtual->quantP >= capacidadeMax) {
+    Caixa* topoAtual = NULL;
+    if (*pTopo == NULL) {
         Caixa* novaCaixa = (Caixa*)malloc(sizeof(Caixa));
         if (novaCaixa == NULL) {
             perror("malloc falhou para nova caixa");
-            return;
+            return true;
         }
-
-        static int global_caixa_id = 1;
-        novaCaixa->codigo = global_caixa_id++;
-
+        novaCaixa->codigo = caixa_id_counters[tipo_idx]++;
         novaCaixa->quantP = 0;
         novaCaixa->lista_codigos = NULL;
-        novaCaixa->below = topoAtual;
+        novaCaixa->below = NULL;
+
         *pTopo = novaCaixa;
         topoAtual = novaCaixa;
     }
+    else {
+        Caixa* cur = *pTopo;
+        while (cur != NULL) {
+            if (cur->quantP < capacidadeMax) {
+                topoAtual = cur;
+            }
+            break;
+        }
+        if (topoAtual == NULL) {
+            Caixa* novaCaixa = (Caixa*)malloc(sizeof(Caixa));
+            if (novaCaixa == NULL) {
+                perror("malloc falhou para nova caixa extra");
+                return true;
+            }
+            novaCaixa->codigo = caixa_id_counters[tipo_idx]++;
+            novaCaixa->quantP = 0;
+            novaCaixa->lista_codigos = NULL;
 
+            novaCaixa->below = *pTopo;
+            *pTopo = novaCaixa;
+            topoAtual = novaCaixa;
+        }
+    }
     ListaCodigos* novoCodigo = (ListaCodigos*)malloc(sizeof(ListaCodigos));
     if (novoCodigo == NULL) {
         perror("malloc falhou para novo codigo");
-        return;
+        return true;
     }
 
     novoCodigo->codigo = codigoProduto;
     novoCodigo->next = topoAtual->lista_codigos;
     topoAtual->lista_codigos = novoCodigo;
+
     topoAtual->quantP++;
-    return;
+
+    return false;
 }
 
 void ImprimirPilha(const char* nome, Caixa* topo, int capacidade) {
@@ -120,6 +153,10 @@ void limpar_buffer_stdin() {
 void AdicionarLPV(int codigo, const char* tipo_produto, const char* descricao, float preco) {
     if (CodigoExiste(codigo)) {
         printf("Erro: Codigo %d ja cadastrado. Operacao cancelada.\n", codigo);
+        return;
+    }
+
+    if (AddPilhaCaixa(codigo, tipo_produto)) {
         return;
     }
 
@@ -178,7 +215,6 @@ void AdicionarLPV(int codigo, const char* tipo_produto, const char* descricao, f
         }
     }
     tamP++;
-    AddPilhaCaixa(codigo, tipo_produto);
 }
 
 void AdicionarFE(const char* nomeCliente, const char* cpfCliente, int cepCliente, const char* ruaCliente, int numeroCasaCliente, const char* complementoCasaCliente, ListaProdutos* produtoVendido) {
@@ -315,109 +351,86 @@ void ImprimirVendaP(float valorI, float valorF) {
     return;
 }
 
-void RemoverProdutoDaPilha(int codigoProduto, const char* tipo_produto) {
-    int tipo_idx = tipo_index_from_string(tipo_produto);
+bool RemoverProdutoDaPilha(int codigoProduto, const char* tipo_produto) {
+    int tipo_idx = tipo_index_para_string(tipo_produto);
     if (tipo_idx < 0 || tipo_idx >= NUM_TYPES) {
         printf("ERRO ESTOQUE: Tipo de produto '%s' desconhecido.\n", tipo_produto);
-        return;
+        return true;
     }
 
-    Caixa** pilha_ptrs[NUM_TYPES] = { &topoParafina, &topoLeash, &topoQuilha, &topoDeck };
+    Caixa* pilha_ptrs[NUM_TYPES] = { topoParafina, topoLeash, topoQuilha, topoDeck };
     int capacities[NUM_TYPES] = { CAP_PARAFINA, CAP_LEASH, CAP_QUILHA, CAP_DECK };
 
-    Caixa** pTopo = pilha_ptrs[tipo_idx];
+    Caixa* pTopo = pilha_ptrs[tipo_idx];
     int capacidadeMax = capacities[tipo_idx];
 
-    Caixa* pilhaAux = NULL;
-    Caixa* caixaEncontrada = NULL;
-    while (*pTopo != NULL) {
-        Caixa* caixaAtual = *pTopo;
-        *pTopo = (*pTopo)->below;
-        caixaAtual->below = NULL;
+    Caixa* topoPilhaAux = NULL;
+    Caixa* enderecoCaixaAbaixo = NULL;
+    Caixa* caixaAntiga = NULL;
+    int contadorPush = 0;
 
-        ListaCodigos* cod = caixaAtual->lista_codigos;
-        ListaCodigos* prev = NULL;
-        bool found = false;
-        while (cod != NULL) {
-            if (cod->codigo == codigoProduto) {
-                if (prev == NULL) {
-                    caixaAtual->lista_codigos = cod->next;
-                }
-                else {
-                    prev->next = cod->next;
-                }
-                free(cod);
-                caixaAtual->quantP--;
-                caixaEncontrada = caixaAtual;
-                found = true;
+    while (pTopo != NULL) {
+        ListaCodigos* posCerta = pTopo->lista_codigos;
+        for (int i=0; i<pTopo->quantP; i++){
+            if (posCerta->codigo == codigoProduto) {
                 break;
             }
-            prev = cod;
-            cod = cod->next;
+            posCerta = posCerta->next;
         }
-
-        if (found) {
-            break;
-        }
-        else {
-            PushCaixa(&pilhaAux, caixaAtual);
-        }
-    }
-
-    if (caixaEncontrada == NULL) {
-        while (pilhaAux != NULL) {
-            Caixa* temp = pilhaAux;
-            pilhaAux = pilhaAux->below;
-            PushCaixa(pTopo, temp);
-        }
-        printf("Venda Falhou: Nao foi encontrado o codigo %d na pilha %s.\n", codigoProduto, tipo_produto);
-        return;
-    }
-
-    Caixa* caixaEquilibrio = NULL;
-    if (pilhaAux != NULL) {
-        caixaEquilibrio = pilhaAux;
-        pilhaAux = pilhaAux->below;
-        caixaEquilibrio->below = NULL;
-    }
-
-    while (pilhaAux != NULL) {
-        Caixa* temp = pilhaAux;
-        pilhaAux = pilhaAux->below;
-        PushCaixa(pTopo, temp);
-    }
-    if (caixaEquilibrio != NULL) {
-        if (caixaEncontrada->quantP < capacidadeMax) {
-            int codEquilibrio = PopCodigo(&(caixaEquilibrio->lista_codigos));
-            if (codEquilibrio != -1) {
-                PushCodigo(&(caixaEncontrada->lista_codigos), codEquilibrio);
-                caixaEquilibrio->quantP--;
-                caixaEncontrada->quantP++;
+        if (posCerta != NULL) {
+            if (contadorPush == 0) {
+                pTopo->quantP--;
+                pTopo->lista_codigos = posCerta->next;
+                free(posCerta);
+                return false;
             }
-        }
-    }
-
-    PushCaixa(pTopo, caixaEncontrada);
-
-    if (caixaEquilibrio != NULL) {
-        if (caixaEquilibrio->quantP == 0) {
-            printf("Info Estoque: Caixa %d ficou vazia e foi descartada.\n", caixaEquilibrio->codigo);
-            free(caixaEquilibrio);
+            else {
+                for (int i = 0; i < contadorPush; i++) {
+                    if (i == contadorPush - 1) {
+                        ListaCodigos* ultimaPos = topoPilhaAux->lista_codigos;
+                        ListaCodigos* penultimaPos = NULL;
+                        for (int i = 0; i < topoPilhaAux->quantP; i++) {
+                            if (ultimaPos->next == NULL) {
+                                posCerta->codigo = ultimaPos->codigo;
+                                penultimaPos->next = NULL;
+                                free(ultimaPos);
+                                topoPilhaAux->quantP--;
+                                break;
+                            }
+                            penultimaPos = ultimaPos;
+                            ultimaPos = ultimaPos->next;
+                        }
+                    }
+                    enderecoCaixaAbaixo = topoPilhaAux->below;
+                    topoPilhaAux->below = pTopo;
+                    pTopo = topoPilhaAux;
+                    topoPilhaAux = enderecoCaixaAbaixo;
+                }
+            }
+            return false;
         }
         else {
-            PushCaixa(pTopo, caixaEquilibrio);
+            caixaAntiga = topoPilhaAux;
+            topoPilhaAux = pTopo;
+            pTopo = pTopo->below;
+            topoPilhaAux->below = caixaAntiga;
+            contadorPush++;
         }
     }
+    return true;
 }
 
-ListaProdutos* VendaProduto(int codigo) {
+ListaProdutos* VendaProduto(int codigoProduto) {
     ListaProdutos* aux = headP;
-    while (aux != NULL && aux->codigo != codigo) aux = aux->next;
+    while (aux != NULL && aux->codigo != codigoProduto) aux = aux->next;
     if (aux == NULL) {
-        printf("Venda Falhou: Nao foi encontrado nenhum produto com o codigo %d\n", codigo);
+        printf("Venda Falhou: Nao foi encontrado nenhum produto com o codigo %d\n", codigoProduto);
         return NULL;
     }
-    RemoverProdutoDaPilha(aux->codigo, aux->tipo_produto);
+    if (RemoverProdutoDaPilha(aux->codigo, aux->tipo_produto)) {
+        printf("O Codigo: %d nao foi encontrado!", codigoProduto);
+        return NULL;
+    }
 
     if (aux == headP) {
         headP = aux->next;
@@ -455,31 +468,6 @@ void ComfirmacaoSE() {
     return;
 }
 
-void PushCaixa(Caixa** pTopo, Caixa* caixa) {
-    if (caixa == NULL) return;
-    caixa->below = *pTopo;
-    *pTopo = caixa;
-}
-
-int PopCodigo(ListaCodigos** head) {
-    if (head == NULL || *head == NULL) return -1;
-    ListaCodigos* node = *head;
-    int codigo = node->codigo;
-    *head = node->next;
-    free(node);
-    return codigo;
-}
-
-void PushCodigo(ListaCodigos** head, int codigo) {
-    ListaCodigos* node = (ListaCodigos*)malloc(sizeof(ListaCodigos));
-    if (node == NULL) {
-        perror("malloc falhou para PushCodigo");
-        return;
-    }
-    node->codigo = codigo;
-    node->next = *head;
-    *head = node;
-}
 void LiberarCodigos(ListaCodigos* head) {
     ListaCodigos* cur = head;
     while (cur != NULL) {
@@ -488,6 +476,7 @@ void LiberarCodigos(ListaCodigos* head) {
         cur = prox;
     }
 }
+
 void LiberarCaixas(Caixa** topo_ptr) {
     if (topo_ptr == NULL) return;
     Caixa* caixa = *topo_ptr;
@@ -541,15 +530,4 @@ void ImprimirEntregaNode(const FilaEntrega* node) {
     printf("Complemento da Casa do Cliente: %s\n", node->complementoCasaCliente);
     ImprimirProdutoNode(node->ProdutoVendido);
     return;
-}
-
-static int strings_equal_ci(const char* a, const char* b) {
-    if (a == NULL || b == NULL) return 0;
-    while (*a != '\0' && *b != '\0') {
-        char ca = tolower((unsigned char)*a);
-        char cb = tolower((unsigned char)*b);
-        if (ca != cb) return 0;
-        a++; b++;
-    }
-    return *a == *b;
 }

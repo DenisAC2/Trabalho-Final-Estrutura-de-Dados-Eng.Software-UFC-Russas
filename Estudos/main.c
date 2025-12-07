@@ -194,7 +194,7 @@ int main() {
                 }
                 nomePilha[strcspn(nomePilha, "\n")] = 0;
 
-                int tipo_idx = tipo_index_from_string(nomePilha);
+                int tipo_idx = tipo_index_para_string(nomePilha);
                 if (tipo_idx == -1) {
                     printf("ERRO ESTOQUE: Tipo de produto '%s' desconhecido. Tente novamente.\n", nomePilha);
                     continue;
