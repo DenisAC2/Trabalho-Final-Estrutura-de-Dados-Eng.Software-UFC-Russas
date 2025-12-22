@@ -5,6 +5,51 @@
 #include <ctype.h>
 #include "headfunctions.h"
 
+int InsercaoInt(int* destino) {
+    char Buffer[64];
+    char* ptrFim;
+    if (fgets(Buffer, sizeof(Buffer), stdin) != NULL) {
+        Buffer[strcspn(Buffer, "\n")] = 0;
+        long valor_convertido = strtol(Buffer, &ptrFim, 10);
+        if (Buffer == ptrFim) {
+            return 2;
+        }
+        else if (*ptrFim != '\0') {
+            return 3;
+        }
+        else *destino = (int)valor_convertido; return 0;
+    }
+    else return 1;
+}
+
+int InsercaoFloat(float* destino) {
+    char Buffer[64];
+    char* ptrFim;
+    if (fgets(Buffer, sizeof(Buffer), stdin) != NULL) {
+        Buffer[strcspn(Buffer, "\n")] = 0;
+        float valor_convertido = strtof(Buffer, &ptrFim);
+        if (Buffer == ptrFim) {
+            return 2;
+        }
+        else if (*ptrFim != '\0') {
+            return 3;
+        }
+        else *destino = (float)valor_convertido; return 0;
+    }
+    else return 1;
+}
+
+int InsercaoString(char* destino, int TamBuffer) {
+    if (fgets(destino, TamBuffer, stdin) != NULL) {
+        destino[strcspn(destino, "\n")] = 0;
+        if (destino[0] == '\0') {
+            return 2;
+        }
+        return 0;
+    }
+    else return 1;
+}
+
 static bool strings_equal_ci(const char* a, const char* b) {
     if (a == NULL || b == NULL) return false;
     while (*a != '\0' && *b != '\0') {
@@ -143,11 +188,6 @@ void ImprimirPilhas() {
     ImprimirPilha("Quilha", topoQuilha, CAP_QUILHA);
     ImprimirPilha("Deck", topoDeck, CAP_DECK);
     printf("============================================\n");
-}
-
-void limpar_buffer_stdin() {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
 }
 
 void AdicionarLPV(int codigo, const char* tipo_produto, const char* descricao, float preco) {

@@ -6,10 +6,8 @@
 #include "headfunctions.h"
 
 int main() {
-    int escolha = -1;
+    int escolha = -1, Verificacao = -1, pos = -1;
     do {
-        escolha = -1;
-        static int pos = -1;
         printf("\n--- MENU DE PRODUTOS ---\n");
         printf("1 - Adicionar Produto a Lista de Venda\n");
         printf("2 - Abrir Menu de Vendas\n");
@@ -18,8 +16,20 @@ int main() {
         printf("5 - Verificar as Pilhas de Todas as Categorias\n");
         printf("0 - Sair do programa\n");
         printf("Escolha: ");
-        scanf_s("%d", &escolha);
-        limpar_buffer_stdin();
+        Verificacao = InsercaoInt(&escolha);
+        if (Verificacao == 1) {
+            printf("Entrada invalida. Saindo.\n");
+            LiberarTudo();
+            return 0;
+        }
+        else if (Verificacao == 2) {
+            printf("Erro: Voce nao digitou um numero valido!\n");
+            continue;
+        }
+        else if (Verificacao == 3) {
+            printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+            continue;
+        }
 
         switch (escolha) {
 
@@ -30,27 +40,60 @@ int main() {
             float preco = 0;
 
             printf("Digite o codigo do produto: ");
-            scanf_s("%d", &codigo);
-            limpar_buffer_stdin();
+            Verificacao = InsercaoInt(&codigo);
+            if (Verificacao == 1) {
+                printf("Entrada invalida. Saindo.\n");
+                LiberarTudo();
+                return 0;
+            }
+            else if (Verificacao == 2) {
+                printf("Erro: Voce nao digitou um numero valido!\n");
+                continue;
+            }
+            else if (Verificacao == 3) {
+                printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+                continue;
+            }
 
             printf("Digite do tipo de produto: ");
-            if (fgets(tipo_produto, sizeof(tipo_produto), stdin) == NULL) {
+            Verificacao = InsercaoString(tipo_produto, sizeof(tipo_produto));
+            if (Verificacao == 1) {
                 printf("Entrada invalida. Saindo.\n");
                 LiberarTudo();
                 return 0;
             }
-            tipo_produto[strcspn(tipo_produto, "\n")] = 0;
+            else if (Verificacao == 2) {
+                printf("Erro: Voce nao digitou uma string valida!\n");
+                continue;
+            }
 
             printf("Digite a descricao o produto: ");
-            if (fgets(descricao, sizeof(descricao), stdin) == NULL) {
+            Verificacao = InsercaoString(descricao, sizeof(descricao));
+            if (Verificacao == 1) {
                 printf("Entrada invalida. Saindo.\n");
                 LiberarTudo();
                 return 0;
             }
-            descricao[strcspn(descricao, "\n")] = 0;
+            else if (Verificacao == 2) {
+                printf("Erro: Voce nao digitou uma string valida!\n");
+                continue;
+            }
 
             printf("Digite o preco do produto: ");
-            scanf_s("%f", &preco);
+            Verificacao = InsercaoFloat(&preco);
+            if (Verificacao == 1) {
+                printf("Entrada invalida. Saindo.\n");
+                LiberarTudo();
+                return 0;
+            }
+            else if (Verificacao == 2) {
+                printf("Erro: Voce nao digitou um numero valido!\n");
+                continue;
+            }
+            else if (Verificacao == 3) {
+                printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+                continue;
+            }
             AdicionarLPV(codigo, tipo_produto, descricao, preco);
             break;
         }
@@ -66,38 +109,90 @@ int main() {
                 printf("4 - Confirmacao de Saida Para Entrega\n");
                 printf("0 - Sair do Menu de Vendas\n");
                 printf("Escolha: ");
-                scanf_s("%d", &opcao);
-                limpar_buffer_stdin();
+                Verificacao = InsercaoInt(&opcao);
+                if (Verificacao == 1) {
+                    printf("Entrada invalida. Saindo.\n");
+                    LiberarTudo();
+                    return 0;
+                }
+                else if (Verificacao == 2) {
+                    printf("Erro: Voce nao digitou um numero valido!\n");
+                    continue;
+                }
+                else if (Verificacao == 3) {
+                    printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+                    continue;
+                }
 
                 switch (opcao) {
                 case 1: {
                     char categoria[64];
                     printf("Digite a Categoria que Deseja: ");
-                    if (fgets(categoria, sizeof(categoria), stdin) == NULL) {
+                    Verificacao = InsercaoString(categoria, sizeof(categoria));
+                    if (Verificacao == 1) {
                         printf("Entrada invalida. Saindo.\n");
                         LiberarTudo();
                         return 0;
                     }
-                    categoria[strcspn(categoria, "\n")] = 0;
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou uma string valida!\n");
+                        continue;
+                    }
                     ImprimirVendaC(categoria);
                     break;
                 }
                 case 2: {
                     float valorI, valorF;
                     printf("Digite o Valor Inicial: ");
-                    scanf_s("%f", &valorI);
-                    limpar_buffer_stdin();
+                    Verificacao = InsercaoFloat(&valorI);
+                    if (Verificacao == 1) {
+                        printf("Entrada invalida. Saindo.\n");
+                        LiberarTudo();
+                        return 0;
+                    }
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou um numero valido!\n");
+                        continue;
+                    }
+                    else if (Verificacao == 3) {
+                        printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+                        continue;
+                    }
                     printf("Digite o Valor Final: ");
-                    scanf_s("%f", &valorF);
-                    limpar_buffer_stdin();
+                    Verificacao = InsercaoFloat(&valorF);
+                    if (Verificacao == 1) {
+                        printf("Entrada invalida. Saindo.\n");
+                        LiberarTudo();
+                        return 0;
+                    }
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou um numero valido!\n");
+                        continue;
+                    }
+                    else if (Verificacao == 3) {
+                        printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+                        continue;
+                    }
                     ImprimirVendaP(valorI, valorF);
                     break;
                 }
                 case 3: {
                     int codigoVenda = -1;
                     printf("Digite o codigo do produto para venda: ");
-                    scanf_s("%d", &codigoVenda);
-                    limpar_buffer_stdin();
+                    Verificacao = InsercaoInt(&codigoVenda);
+                    if (Verificacao == 1) {
+                        printf("Entrada invalida. Saindo.\n");
+                        LiberarTudo();
+                        return 0;
+                    }
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou um numero valido!\n");
+                        continue;
+                    }
+                    else if (Verificacao == 3) {
+                        printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+                        continue;
+                    }
                     printf("-----------------------------------------------------------\n");
                     ProdutoVendido = VendaProduto(codigoVenda);
                     printf("-----------------------------------------------------------\n");
@@ -114,44 +209,84 @@ int main() {
                     printf("Produto Vendido, Informe os Dados da Entrega:\n");
                     printf("-----------------------------------------------------------\n");
                     printf("Digite o Nome do Cliente: ");
-                    if (fgets(nomeCliente, sizeof(nomeCliente), stdin) == NULL) {
+                    Verificacao = InsercaoString(nomeCliente, sizeof(nomeCliente));
+                    if (Verificacao == 1) {
                         printf("Entrada invalida. Saindo.\n");
                         LiberarTudo();
                         return 0;
                     }
-                    nomeCliente[strcspn(nomeCliente, "\n")] = 0;
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou uma string valida!\n");
+                        continue;
+                    }
 
                     printf("Digite o CPF do Cliente: ");
-                    if (fgets(cpfCliente, sizeof(cpfCliente), stdin) == NULL) {
+                    Verificacao = InsercaoString(cpfCliente, sizeof(cpfCliente));
+                    if (Verificacao == 1) {
                         printf("Entrada invalida. Saindo.\n");
                         LiberarTudo();
                         return 0;
                     }
-                    cpfCliente[strcspn(cpfCliente, "\n")] = 0;
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou uma string valida!\n");
+                        continue;
+                    }
 
                     printf("Digite o CEP (Somente numeros) do Cliente: ");
-                    scanf_s("%d", &cepCliente);
-                    limpar_buffer_stdin();
+                    Verificacao = InsercaoInt(&cepCliente);
+                    if (Verificacao == 1) {
+                        printf("Entrada invalida. Saindo.\n");
+                        LiberarTudo();
+                        return 0;
+                    }
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou um numero valido!\n");
+                        continue;
+                    }
+                    else if (Verificacao == 3) {
+                        printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+                        continue;
+                    }
 
                     printf("Digite o Nome da Rua do Cliente: ");
-                    if (fgets(ruaCliente, sizeof(ruaCliente), stdin) == NULL) {
+                    Verificacao = InsercaoString(ruaCliente, sizeof(ruaCliente));
+                    if (Verificacao == 1) {
                         printf("Entrada invalida. Saindo.\n");
                         LiberarTudo();
                         return 0;
                     }
-                    ruaCliente[strcspn(ruaCliente, "\n")] = 0;
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou uma string valida!\n");
+                        continue;
+                    }
 
                     printf("Digite o Numero da Casa do Cliente: ");
-                    scanf_s("%d", &numeroCasaCliente);
-                    limpar_buffer_stdin();
-
-                    printf("Digite o Complemento da Casa do Cliente: ");
-                    if (fgets(complementoCasaCliente, sizeof(complementoCasaCliente), stdin) == NULL) {
+                    Verificacao = InsercaoInt(&numeroCasaCliente);
+                    if (Verificacao == 1) {
                         printf("Entrada invalida. Saindo.\n");
                         LiberarTudo();
                         return 0;
                     }
-                    complementoCasaCliente[strcspn(complementoCasaCliente, "\n")] = 0;
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou um numero valido!\n");
+                        continue;
+                    }
+                    else if (Verificacao == 3) {
+                        printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+                        continue;
+                    }
+
+                    printf("Digite o Complemento da Casa do Cliente: ");
+                    Verificacao = InsercaoString(complementoCasaCliente, sizeof(complementoCasaCliente));
+                    if (Verificacao == 1) {
+                        printf("Entrada invalida. Saindo.\n");
+                        LiberarTudo();
+                        return 0;
+                    }
+                    else if (Verificacao == 2) {
+                        printf("Erro: Voce nao digitou uma string valida!\n");
+                        continue;
+                    }
                     AdicionarFE(nomeCliente, cpfCliente, cepCliente, ruaCliente, numeroCasaCliente, complementoCasaCliente, ProdutoVendido);
                     printf("\n-----------------------------------------------------------\n");
                     break;
@@ -178,7 +313,20 @@ int main() {
 
         case 3: {
             printf("Digite a posicao desejada de 0 a %d (-1 para todos): ", tamP - 1);
-            scanf_s("%d", &pos);
+            Verificacao = InsercaoInt(&pos);
+            if (Verificacao == 1) {
+                printf("Entrada invalida. Saindo.\n");
+                LiberarTudo();
+                return 0;
+            }
+            else if (Verificacao == 2) {
+                printf("Erro: Voce nao digitou um numero valido!\n");
+                continue;
+            }
+            else if (Verificacao == 3) {
+                printf("Erro: Voce digitou caracteres invalidos! Digite apenas numeros.\n");
+                continue;
+            }
             Imprimir(pos);
             break;
         }
@@ -187,12 +335,16 @@ int main() {
             while (true) {
                 char nomePilha[64];
                 printf("Digite o Nome da Pilha (Parafina, Leash, Quilha, Deck): ");
-                if (fgets(nomePilha, sizeof(nomePilha), stdin) == NULL) {
+                Verificacao = InsercaoString(nomePilha, sizeof(nomePilha));
+                if (Verificacao == 1) {
                     printf("Entrada invalida. Saindo.\n");
                     LiberarTudo();
                     return 0;
                 }
-                nomePilha[strcspn(nomePilha, "\n")] = 0;
+                else if (Verificacao == 2) {
+                    printf("Erro: Voce nao digitou uma string valida!\n");
+                    continue;
+                }
 
                 int tipo_idx = tipo_index_para_string(nomePilha);
                 if (tipo_idx == -1) {
