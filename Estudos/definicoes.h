@@ -6,6 +6,6 @@
 #define CAP_DECK 5
 
 enum { TYPE_PARAFINA = 0, TYPE_LEASH = 1, TYPE_QUILHA = 2, TYPE_DECK = 3, NUM_TYPES = 4 };
-static const char* PRODUCT_TYPE_NAMES[NUM_TYPES] = { "Parafina", "Leash", "Quilha", "Deck" };
+extern const char* PRODUCT_TYPE_NAMES[NUM_TYPES];
 
-static int caixa_id_counters[NUM_TYPES] = { 0 };
+extern int caixa_id_counters[NUM_TYPES];

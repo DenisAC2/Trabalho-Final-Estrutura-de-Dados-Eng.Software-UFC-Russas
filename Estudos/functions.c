@@ -50,7 +50,7 @@ int InsercaoString(char* destino, int TamBuffer) {
     else return 1;
 }
 
-static bool strings_equal_ci(const char* a, const char* b) {
+static bool StringsCaseInsensitive(const char* a, const char* b) {
     if (a == NULL || b == NULL) return false;
     while (*a != '\0' && *b != '\0') {
         char ca = tolower((unsigned char)*a);
@@ -61,7 +61,7 @@ static bool strings_equal_ci(const char* a, const char* b) {
     return *a == *b;
 }
 
-int tipo_index_para_string(const char* s) {
+int IndiceParaString(const char* s) {
     if (s == NULL) return -1;
     char buf[64];
     size_t i = 0;
@@ -73,13 +73,13 @@ int tipo_index_para_string(const char* s) {
     buf[i] = '\0';
 
     for (int j = 0; j < NUM_TYPES; j++) {
-        if (strings_equal_ci(buf, PRODUCT_TYPE_NAMES[j])) return j;
+        if (StringsCaseInsensitive(buf, PRODUCT_TYPE_NAMES[j])) return j;
     }
     return -1;
 }
 
 bool AddPilhaCaixa(int codigoProduto, const char* tipo_produto) {
-    int tipo_idx = tipo_index_para_string(tipo_produto);
+    int tipo_idx = IndiceParaString(tipo_produto);
     if (tipo_idx < 0 || tipo_idx >= NUM_TYPES) {
         printf("ERRO ESTOQUE: Tipo de produto '%s' desconhecido.\n", tipo_produto);
         return true;
@@ -368,7 +368,7 @@ void ImprimirVendaC(const char* tipo_produto) {
     }
     ListaProdutos* aux = headP;
     while (aux != NULL) {
-        if (strings_equal_ci(aux->tipo_produto, tipo_produto)) {
+        if (StringsCaseInsensitive(aux->tipo_produto, tipo_produto)) {
             ImprimirProdutoNode(aux);
         }
         aux = aux->next;
@@ -392,7 +392,7 @@ void ImprimirVendaP(float valorI, float valorF) {
 }
 
 bool RemoverProdutoDaPilha(int codigoProduto, const char* tipo_produto) {
-    int tipo_idx = tipo_index_para_string(tipo_produto);
+    int tipo_idx = IndiceParaString(tipo_produto);
     if (tipo_idx < 0 || tipo_idx >= NUM_TYPES) {
         printf("ERRO ESTOQUE: Tipo de produto '%s' desconhecido.\n", tipo_produto);
         return true;

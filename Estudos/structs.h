@@ -34,7 +34,7 @@ typedef struct fila {
     struct fila* next;
 } FilaEntrega;
 
-//os extern's servem para declarar mas sem definir. serve pra nao dar erro lnk2005 (quando tem multiplas definicoes)
+//os extern's servem para declarar mas sem definir. serve pra nao dar erro na linkagem: lnk2005 (quando tem multiplas definicoes)
 extern ListaProdutos* headP;
 extern ListaProdutos* tailP;
 extern int tamP;
