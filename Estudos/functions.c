@@ -454,9 +454,10 @@ ListaProdutos* VendaProduto(int codigoProduto) {
     return aux;
 }
 
-void ComfirmacaoSE() {
+void ConfirmacaoSE() {
     FilaEntrega* aux = headFE;
     if (aux == NULL) {
+        printf("-----------------------------------------------------------\n");
         printf("Nao tem Produtos na Fila de entrega");
         return;
     }

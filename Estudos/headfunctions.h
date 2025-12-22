@@ -17,7 +17,7 @@ void LiberarProdutos();
 void LiberarTudo();
 bool RemoverProdutoDaPilha(int, const char*);
 ListaProdutos* VendaProduto(int);
-void ComfirmacaoSE();
+void ConfirmacaoSE();
 void limpar_buffer_stdin();
 bool strings_equal_ci(const char*, const char*);
 int tipo_index_para_string(const char*);

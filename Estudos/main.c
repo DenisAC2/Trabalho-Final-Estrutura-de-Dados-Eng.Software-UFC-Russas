@@ -63,7 +63,7 @@ int main() {
                 printf("1 - Ver Produtos Por Categoria\n");
                 printf("2 - Ver Produtos Por Faixa de Preco\n");
                 printf("3 - Vender Produto\n");
-                printf("4 - Comfirmacao de Saida Para Entrega\n");
+                printf("4 - Confirmacao de Saida Para Entrega\n");
                 printf("0 - Sair do Menu de Vendas\n");
                 printf("Escolha: ");
                 scanf_s("%d", &opcao);
@@ -159,8 +159,8 @@ int main() {
                 case 4: {
                     printf("\n-----------------------------------------------------------\n");
                     printf("Saindo Para Entrega: \n");
-                    ComfirmacaoSE();
-                    printf("-----------------------------------------------------------\n");
+                    ConfirmacaoSE();
+                    printf("\n-----------------------------------------------------------\n");
                     break;
                 }
                 case 0: {
