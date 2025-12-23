@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "headfunctions.h"
+#include "FunctionsMenu.h"
 
 int main() {
     int escolha = -1, Verificacao = -1, pos = -1;

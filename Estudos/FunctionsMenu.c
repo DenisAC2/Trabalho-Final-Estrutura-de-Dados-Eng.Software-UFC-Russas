@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "headfunctions.h"
+#include "FunctionsMenu.h"
 
 int InsercaoInt(int* destino) {
     char Buffer[64];

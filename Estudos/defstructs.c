@@ -1,6 +1,5 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include "structs.h"
+#include "DefStructs.h"
 
 ListaProdutos* headP = NULL;
 ListaProdutos* tailP = NULL;

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "definicoes.h"
-
 typedef struct Produto {
     int codigo;
     char tipo_produto[32];

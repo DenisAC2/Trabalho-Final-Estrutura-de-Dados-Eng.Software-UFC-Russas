@@ -1,5 +1,6 @@
 #pragma once
-#include "structs.h"
+#include "DefStructs.h"
+#include "DefConst.h"
 
 bool AddPilhaCaixa(int, const char*);
 void AdicionarLPV(int, const char*, const char*, float);
